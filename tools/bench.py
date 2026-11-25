@@ -328,11 +328,15 @@ def clone_firecracker(n):
 # --------------------------------------------------------------------------
 
 
-def leetscale_busy():
-    """Other heavy work on this host (LeetScale load tests in Docker) would
-    turn a VMM benchmark into a contention benchmark."""
+def host_busy():
+    """Other heavy work on the host turns a VMM benchmark into a contention
+    benchmark. Set BENCH_WAIT_FOR to a docker container-name filter to pause
+    trials while matching containers run (unset: never wait)."""
+    pattern = os.environ.get("BENCH_WAIT_FOR")
+    if not pattern:
+        return False
     try:
-        out = subprocess.run(["docker", "ps", "-q", "--filter", "name=ls-flash-sale"], capture_output=True, text=True, timeout=20).stdout
+        out = subprocess.run(["docker", "ps", "-q", "--filter", f"name={pattern}"], capture_output=True, text=True, timeout=20).stdout
     except (OSError, subprocess.TimeoutExpired):
         return False
     return bool(out.strip())
@@ -342,15 +346,15 @@ def quiet_trial(fn, label):
     """Run fn only while the host is quiet; redo it if a load test overlapped."""
     while True:
         waited = 0
-        while leetscale_busy():
+        while host_busy():
             time.sleep(5)
             waited += 5
         if waited:
-            print(f"  (waited {waited} s for a LeetScale run to finish)", flush=True)
+            print(f"  (waited {waited} s for the host to go quiet)", flush=True)
         r = fn()
-        if not leetscale_busy():
+        if not host_busy():
             return r
-        print(f"  ({label}: discarded, a LeetScale run started during it)", flush=True)
+        print(f"  ({label}: discarded, the host got busy during it)", flush=True)
 
 
 def interleaved(variants, runs):

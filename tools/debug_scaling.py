@@ -2,7 +2,7 @@
 where does the CPU time go (Colima VM /proc/stat: user, system, idle, guest)?"""
 import os
 import shutil, sys, time, threading
-sys.path.insert(0, __file__.rsplit("/", 1)[0]); sys.path.insert(0, os.environ.get("MINIRL", "/Users/naman/Code/minirl"))
+sys.path.insert(0, __file__.rsplit("/", 1)[0]); sys.path.insert(0, os.environ.get("MINIRL", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "minirl"))))
 from minirl.tasks.code import RUNNER, load_tasks
 from rlenv import TinyVM
 task = load_tasks()[0]; cwd = f"/work/{task['id']}"

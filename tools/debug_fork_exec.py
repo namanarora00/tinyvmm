@@ -1,7 +1,7 @@
 """Why are commands slow in fork children? Time the same command in the
 template and in children, one child at a time and all at once."""
-import shutil, sys, time, threading
-sys.path.insert(0, __file__.rsplit("/", 1)[0]); sys.path.insert(0, "/Users/naman/Code/minirl")
+import os, shutil, sys, time, threading
+sys.path.insert(0, __file__.rsplit("/", 1)[0]); sys.path.insert(0, os.environ.get("MINIRL", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "minirl"))))
 from minirl.tasks.code import RUNNER, load_tasks
 from rlenv import TinyVM
 task = load_tasks()[0]; cwd = f"/work/{task['id']}"

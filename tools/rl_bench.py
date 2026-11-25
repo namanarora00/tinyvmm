@@ -32,7 +32,7 @@ import threading
 import time
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-sys.path.insert(0, os.environ.get("MINIRL", "/Users/naman/Code/minirl"))
+sys.path.insert(0, os.environ.get("MINIRL", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "minirl"))))
 from minirl.tasks.code import RUNNER, load_tasks  # noqa: E402
 from rlenv import TinyVM  # noqa: E402
 
