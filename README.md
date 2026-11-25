@@ -20,14 +20,10 @@ with nested KVM (`tools/rl_bench.py`):
 | Docker: a fresh container per candidate | 2,144 ms | containers sharing the host kernel |
 | Docker: 8 warm containers reused | 353 ms | none within a container |
 
-All three got every reward right (64/64). Each fork child used ~7.4 MiB of
-private memory; everything else is shared with the template.
-
-On an Apple M4, where KVM runs nested inside a Colima VM, the same children
-were 8–28x slower, and the slowdown grew quadratically with concurrent VMs.
-That comes from Apple's nested virtualization, not from KVM. Against
-Firecracker on the Mac, forking 4 clones paused the original VM for 8 ms
-(vs 318 ms to write a snapshot) and used 156 MiB of host RAM (vs 608 MiB).
+All three got every reward right (64/64). Forking 8 children took 54 ms,
+and each child used ~7.4 MiB of private memory; everything else is shared
+with the template. The first command in a fresh child took 190 ms with one
+child, and 534 ms each with 8 running at once on 4 cores.
 
 ## How it works
 
@@ -63,11 +59,27 @@ python3 tools/rl_bench.py 8     # vs Docker (MINIRL=path to minirl, default ../m
 
 ## Limitations
 
-- All numbers come from nested virtualization. Bare metal is unmeasured.
+- All numbers come from KVM nested inside a GCP VM. Bare metal is unmeasured.
 - One vCPU, no disk or network devices.
 - Fork children share random-number state (no vmgenid yet).
 - x86: guest userspace output to the console doesn't show up yet.
 - Not hardened (no seccomp, no jailer).
+
+## Roadmap
+
+1. **Real environments.** Turn a Docker image into a disk (virtio-blk), with
+   a copy-on-write overlay per fork, so SWE-bench-style task images run
+   unchanged.
+2. **Forks that are correct for RL.** Tell children they were cloned
+   (vmgenid) so their random numbers diverge, fix x86 console output, and
+   support more than one vCPU.
+3. **Checkpoint reuse.** A frozen template plus a pool of pre-forked
+   children, so "64 more rollouts from step 20" hands out ready VMs instead
+   of forking on demand.
+4. **Harness API.** `reset / step / fork / grade` on top of the sockets,
+   with a multi-turn agent demo (run tests, edit, retry) on minirl's tasks.
+5. **Safety and bare metal.** cgroup resource limits, seccomp, and
+   benchmarks on bare-metal KVM.
 
 ## License
 
