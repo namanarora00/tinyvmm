@@ -1,0 +1,13 @@
+#!/bin/busybox sh
+# PID 1 inside the guest. Mount the basics, tell the VMM we got here, give a shell.
+/bin/busybox --install -s /bin
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+# Boot-time marker: a 1-byte write to an address the VMM watches (not RAM, not
+# in the device tree). The VMM timestamps the exit, like Firecracker's boot timer.
+devmem 0x09040000 8 1
+echo "tinyvmm guest: $(uname -sr), init is up, kernel uptime $(cut -d" " -f1 /proc/uptime) s"
+if grep -q tinyvmm.demo=fork /proc/cmdline; then exec /fork-demo.sh; fi
+if grep -q tinyvmm.demo=heartbeat /proc/cmdline; then exec /heartbeat.sh; fi
+exec setsid cttyhack sh

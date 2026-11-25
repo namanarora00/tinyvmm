@@ -1,0 +1,11 @@
+#!/bin/sh
+# PID 1 of the agent guest (python:3.12-slim's filesystem, in RAM).
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+mkdir -p /work /tmp
+[ -f /mods/order ] && python3 /loadmods.py
+echo "tinyvmm agent guest: $(uname -r), python $(python3 -c 'import sys; print(sys.version.split()[0])')"
+python3 /agent.py
+echo "agent exited ($?); powering off"
+exec poweroff -f 2>/dev/null || echo o > /proc/sysrq-trigger
