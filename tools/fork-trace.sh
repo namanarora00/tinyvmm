@@ -5,7 +5,15 @@
 # the time split between running guest code and handling exits.
 # Usage: fork-trace.sh [children] [extra tinyvmm args...]
 N=${1:-1}; shift 2>/dev/null
-B=$HOME/tinyvmm-target/release/tinyvmm
+# The binary: $TINYVMM, else the first release build found (same order as rlenv.py).
+B=${TINYVMM:-}
+if [ -z "$B" ]; then
+  REPO=$(cd "$(dirname "$0")/.." && pwd)
+  for c in "${CARGO_TARGET_DIR:+$CARGO_TARGET_DIR/release/tinyvmm}" "$REPO/target/release/tinyvmm" "$HOME/tinyvmm-target/release/tinyvmm"; do
+    if [ -n "$c" ] && [ -x "$c" ]; then B=$c; break; fi
+  done
+fi
+[ -n "$B" ] || { echo "no tinyvmm binary: run cargo build --release or set TINYVMM" >&2; exit 1; }
 T=/sys/kernel/tracing
 sudo sh -c "echo 0 > $T/tracing_on; echo mono > $T/trace_clock; echo 32768 > $T/buffer_size_kb; echo > $T/trace
             echo 1 > $T/events/kvm/kvm_exit/enable; echo 1 > $T/events/kvm/kvm_entry/enable; echo 1 > $T/tracing_on"

@@ -57,6 +57,9 @@ python3 tools/agent_smoke.py    # boot, exec, fork, isolation
 python3 tools/rl_bench.py 8     # vs Docker (MINIRL=path to minirl, default ../minirl)
 ```
 
+The tools use the binary in `target/release/` (or `$CARGO_TARGET_DIR`); set
+`TINYVMM=/path/to/tinyvmm` to use another one.
+
 ## Limitations
 
 - All numbers come from KVM nested inside a GCP VM. Bare metal is unmeasured.

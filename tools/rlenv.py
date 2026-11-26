@@ -17,8 +17,22 @@ import subprocess
 import time
 
 HOME = os.environ["HOME"]
-TINYVMM = f"{HOME}/tinyvmm-target/release/tinyvmm"
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ARGS = "console=ttyS0 reboot=k panic=-1 rdinit=/init quiet earlycon=uart8250,mmio,0x9000000"
+
+
+def find_tinyvmm():
+    """The tinyvmm binary: $TINYVMM if set, else the first release build found
+    in $CARGO_TARGET_DIR, this repo's target/ (plain `cargo build --release`),
+    or ~/tinyvmm-target (where run.sh builds inside Colima)."""
+    if os.environ.get("TINYVMM"):
+        return os.environ["TINYVMM"]
+    dirs = [os.environ.get("CARGO_TARGET_DIR"), os.path.join(REPO, "target"), f"{HOME}/tinyvmm-target"]
+    paths = [os.path.join(d, "release", "tinyvmm") for d in dirs if d]
+    for p in paths:
+        if os.access(p, os.X_OK):
+            return p
+    raise FileNotFoundError(f"no tinyvmm binary (looked in {', '.join(paths)}): run `cargo build --release` or set TINYVMM")
 
 
 def connect(path, timeout=30):
@@ -50,7 +64,7 @@ class TinyVM:
             # x86: the kernel defers setting up half of RAM until later in
             # boot, and a 117 MB initramfs doesn't unpack in 1 GB.
             mem = 2048 if platform.machine() == "x86_64" else 1024
-        argv = [TINYVMM, "boot", "--agent", "--mem", str(mem), "--initrd", initrd, "--log-dir", sock_dir]
+        argv = [find_tinyvmm(), "boot", "--agent", "--mem", str(mem), "--initrd", initrd, "--log-dir", sock_dir]
         if platform.machine() != "x86_64":
             argv += ["--cmdline", ARGS]  # arm64; on x86 tinyvmm's default command line is right
         if thp:

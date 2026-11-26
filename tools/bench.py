@@ -28,9 +28,12 @@ import sys
 import threading
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from rlenv import find_tinyvmm  # noqa: E402
+
 HOME = os.environ["HOME"]
 FC = f"{HOME}/fc/firecracker"
-TINYVMM = f"{HOME}/tinyvmm-target/release/tinyvmm"
+TINYVMM = find_tinyvmm()
 KERNEL = f"{HOME}/guest/Image"
 INITRD = f"{HOME}/guest/initramfs.cpio"
 MEM_MIB = 512
